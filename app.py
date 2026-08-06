@@ -6,73 +6,54 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Football Analytics Dashboard")
-st.sidebar.header("Matches")
+st.title("Football Analytics")
 
-competition = st.sidebar.selectbox(
-    "Competition",
-    ["Premier League", "La Liga", "Champions League"]
-)
+match, team, player = st.columns(3)
 
-season = st.sidebar.selectbox(
-    "Season",
-    ["2020/21", "2019/20", "2018/19"]
-)
+with match:
+    st.subheader("Matches")
 
-match = st.sidebar.selectbox(
-    "Match",
-    ["Select a match..."]
-)
-
-team = st.sidebar.selectbox(
-    "Team",
-    ["Home", "Away"]
-)
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric("Possession", ".")
-
-with col2:
-    st.metric("Shots", ".")
-
-with col3:
-    st.metric("xG", ".")
-
-with col4:
-    st.metric("Pass Accuracy", ".")
-
-st.divider()
-
-left, right = st.columns([2, 1])
-
-with left:
-    st.subheader("Pitch Visualisation")
-    st.container(height=500)
-
-with right:
-    st.subheader("Player Stats")
-    st.dataframe(
-        {
-            "Player": [],
-            "Team": [],
-            "Passes": [],
-            "Shots": [],
-            "xG": [],
-            "Rating": []
-        },
-        width="stretch"
+    st.selectbox(
+        "Country",
+        ["England", "Spain"]
     )
 
+    st.selectbox(
+        "Competition",
+        ["Premier League", "Championship", "League 1", "League 2"]
+    )
+
+    st.selectbox(
+        "Home Team",
+        ["Arsenal", "Chelsea", "Tottenham"]
+    )
+
+    st.selectbox(
+        "Away Team",
+        ["Arsenal", "Chelsea", "Tottenham"]
+    )
+
+    st.selectbox(
+        "Season",
+        ["2024/25", "2025/26"]
+    )
+
+    st.button("Open Match")
+
+with team:
+    st.subheader("Teams")
+
+    team_search = st.text_input("Search for a team...")
+
+with player:
+    st.subheader("Players")
+
+    player_search = st.text_input("Search for a player...")
+
 st.divider()
 
-bottom_left, bottom_right = st.columns(2)
+st.subheader("Recent Matches")
 
-with bottom_left:
-    st.subheader("Shot Timeline")
-    st.container(height=300)
+st.divider()
 
-with bottom_right:
-    st.subheader("Passing Network")
-    st.container(height=300)
+st.subheader("Statistics Summary")
