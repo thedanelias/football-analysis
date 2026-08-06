@@ -58,7 +58,7 @@ with left:
         "Value": [2.3, 0.54, 0.66, 2.3, 1.9]
     })
 
-    st.dataframe(stats, use_container_width=True)
+    st.dataframe(stats, width="stretch")
 
 with right:
     st.subheader("Defense")
@@ -74,7 +74,7 @@ with right:
         "Value": [1.2, 3.4, 5.0, 2.3, 10.5]
     })
 
-    st.dataframe(stats, use_container_width=True)
+    st.dataframe(stats, width="stretch")
 
 st.divider()
 
@@ -87,4 +87,4 @@ matches = pd.DataFrame({
     "Assists": [0, 1, 0, 0, 2]
 })
 
-st.dataframe(matches, use_container_width=True)
+st.dataframe(matches, width="stretch")
