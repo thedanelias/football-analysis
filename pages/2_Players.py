@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+players = pd.read_csv("resources/statsbomb_players.csv")
+
 st.set_page_config(
     page_title = "Player Analysis",
     layout = "wide"
@@ -10,17 +12,20 @@ st.set_page_config(
 st.title("Player Analysis")
 
 st.sidebar.header("Filters")
-player = st.sidebar.selectbox(
+player_name = st.sidebar.selectbox(
     "Select Player",
-    ["Erling Haaland", "Bukayo Saka", "Jude Bellingham"]
+    players["player_nickname"].sort_values()
 )
+
+player = players[players["player_nickname"] == player_name]
 
 season = st.sidebar.selectbox(
     "Season",
     ["2025/26", "2024/25"]
 )
 
-st.header(player)
+st.header(player["player_name"])
+player_id = player["player_id"]
 
 col1, col2, col3, col4 = st.columns(4)
 

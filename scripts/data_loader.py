@@ -2,7 +2,8 @@ import pandas as pd
 import json
 from pathlib import Path
 
-DATA_PATH = Path("statsbomb_data")
+ROOT = Path(__file__).resolve().parents[1]
+DATA_PATH = ROOT / "statsbomb_data"
 
 def load_events(match_id):
     return pd.read_json(DATA_PATH / "events" / f"{match_id}.json")
