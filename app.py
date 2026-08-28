@@ -73,7 +73,7 @@ with player:
     player_search = st.selectbox("Player:", players, index=None, placeholder="Search for a player")
 
     if player_search:
-        st.session_state["player"] = player_search
+        st.session_state["player_name"] = player_search
         st.switch_page("pages/2_Players.py")
 
 st.divider()
