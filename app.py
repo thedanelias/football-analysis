@@ -60,7 +60,7 @@ with team:
     team_search = st.selectbox("Team:", teams, index=None, placeholder="Search for a team")
 
     if team_search:
-        st.session_state["team"] = team_search
+        st.session_state["team_name"] = team_search
         st.switch_page("pages/3_Teams.py")
 
 
