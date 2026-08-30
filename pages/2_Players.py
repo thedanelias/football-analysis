@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-
-players = pd.read_csv("resources/statsbomb_players.csv")
+from scripts import player_data
 
 st.set_page_config(
     page_title = "Player Analysis",
@@ -10,22 +9,31 @@ st.set_page_config(
 )
 
 st.title("Player Analysis")
-
 st.sidebar.header("Filters")
-player_name = st.sidebar.selectbox(
-    "Select Player",
-    players["player_nickname"].sort_values()
+
+players_df = pd.read_csv("resources/statsbomb_players.csv")
+player_id = st.session_state.get("player_id")
+player_name = st.session_state.get("player_name")
+
+players = sorted(players_df["player_nickname"].fillna(players_df["player_name"]).tolist())
+index = players.index(player_name) if player_name else None
+
+player = st.sidebar.selectbox(
+    "Player", players, index=index, placeholder="Select Player"
 )
 
-player = players[players["player_nickname"] == player_name]
+if player:
+    player_id = player_data._player_id_from_csv(player)
 
+seasons_df = pd.read_csv("resources/statsbomb_player_seasons.csv")
+competitions_df = seasons_df[seasons_df["player_id"] == player_id]
+competition = st.sidebar.selectbox("Competition", sorted(competitions_df["competition_name"].unique()), index=None,
+                                   placeholder="Select Competition")
+
+seasons = competitions_df[competitions_df["competition_name"] == competition]
 season = st.sidebar.selectbox(
-    "Season",
-    ["2025/26", "2024/25"]
+    "Season", sorted(seasons["season_name"].unique()), index=None, placeholder="Select Season"
 )
-
-st.header(player["player_name"])
-player_id = player["player_id"]
 
 col1, col2, col3, col4 = st.columns(4)
 
