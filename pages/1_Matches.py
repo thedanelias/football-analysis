@@ -9,8 +9,6 @@ st.set_page_config(
 st.title("Match Analysis")
 st.sidebar.header("Matches")
 
-match_id = st.session_state.get("match_id")
-
 competition = st.sidebar.selectbox(
     "Competition",
     ["Premier League", "La Liga", "Champions League"]

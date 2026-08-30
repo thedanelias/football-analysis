@@ -7,7 +7,7 @@ API:
 """
 
 from collections import defaultdict
-from scripts.data_loader import DATA_PATH, ROOT, load_all_matches, load_lineups
+from data_loader import DATA_PATH, ROOT, load_all_matches, load_lineups
 import csv
 import json
 import math

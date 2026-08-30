@@ -9,26 +9,17 @@ st.set_page_config(
 
 st.title("Team Analysis")
 
-# get team id if selected from homepage
-team_name = st.session_state.get("team_name")
-team_seasons_df = pd.read_csv("resources/statsbomb_team_seasons.csv")
-teams_df = pd.read_csv("resources/statsbomb_teams.csv")
-
 st.sidebar.header("Filters")
 
-teams = sorted(teams_df["team_name"].unique())
-
 team = st.sidebar.selectbox(
-    "Team", teams, index=team_name, placeholder="Select Team"
+    "Select Team",
+    ["Manchester City", "Liverpool", "Arsenal"]
 )
 
-team_competitions_df = team_seasons_df[team_seasons_df["team_name"] == team]
-competition = st.sidebar.selectbox("Competition", sorted(team_competitions_df["competition_name"].unique()),
-                                   index=None, placeholder="Select Competition")
-
-team_seasons_df = team_competitions_df[team_competitions_df["competition_name"] == competition]
-season = st.sidebar.selectbox("Season", sorted(team_seasons_df["season_name"].unique()), index=None,
-                              placeholder="Select Season")
+season = st.sidebar.selectbox(
+    "Season",
+    ["2025/26", "2024/25"]
+)
 
 st.header(team)
 
@@ -40,8 +31,6 @@ col3.metric("Goals For", 65)
 col4.metric("Goals Against", 42)
 
 st.divider()
-
-
 
 left, right = st.columns(2)
 
