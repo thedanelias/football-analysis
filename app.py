@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-from streamlit_searchbox import st_searchbox
+from scripts import player_data
 
 st.set_page_config(
     page_title = "Football Analytics",
@@ -73,6 +73,7 @@ with player:
     player_search = st.selectbox("Player:", players, index=None, placeholder="Search for a player")
 
     if player_search:
+        st.session_state["player_id"] = player_data._player_id_from_csv(player_search)
         st.session_state["player_name"] = player_search
         st.switch_page("pages/2_Players.py")
 
