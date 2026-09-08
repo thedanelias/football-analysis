@@ -11,7 +11,7 @@ from functools import lru_cache
 
 import pandas as pd
 
-from data_loader import (
+from scripts.data_loader import (
     DATA_PATH,
     ROOT,
     flatten_match,
