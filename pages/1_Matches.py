@@ -111,21 +111,21 @@ left, right = st.columns([1, 1])
 def player_match_rows(match_id_f):
     rows = []
     for _, lineup in load_lineups(match_id_f).iterrows():
-        team_label = lineup["team_name"]
+        team_label_f = lineup["team_name"]
         for entry in lineup["lineup"]:
             pid = int(entry["player_id"])
             try:
-                stats = player_data.player_match_stats(match_id_f, pid)
+                stats_f = player_data.player_match_stats(match_id_f, pid)
             except (ValueError, FileNotFoundError):
                 continue
             rows.append(
                 {
                     "Player": entry["player_name"],
-                    "Team": team_label,
-                    "Passes": stats.get("pass_attempts", 0),
-                    "Shots": stats.get("shots", 0),
-                    "Goals": stats.get("goals", 0),
-                    "xG": round(stats.get("total_xg", 0.0), 2),
+                    "Team": team_label_f,
+                    "Passes": stats_f.get("pass_attempts", 0),
+                    "Shots": stats_f.get("shots", 0),
+                    "Goals": stats_f.get("goals", 0),
+                    "xG": round(stats_f.get("total_xg", 0.0), 2),
                 }
             )
     return rows
