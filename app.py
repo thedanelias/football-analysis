@@ -46,9 +46,9 @@ with match:
         "Season", seasons_df["season_name"].unique(), index=None, placeholder="Select a Season"
     )
 
-    match_id = seasons_df[seasons_df["season_name"] == season]["match_id"]
-    if st.button("Open Match"):
-        st.session_state["match_id"] = match_id
+    matches_df = seasons_df[seasons_df["season_name"] == season]
+    if st.button("Open Match") and not matches_df.empty:
+        st.session_state["match_id"] = int(matches_df.iloc[0]["match_id"])
         st.switch_page("pages/1_Matches.py")
 
 with team:
