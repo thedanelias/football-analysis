@@ -16,40 +16,67 @@ with match:
     st.subheader("Matches")
 
     matches_df = pd.read_csv("resources/statsbomb_matches.csv")
+    matches_df["match_id"] = matches_df["match_id"].astype(int)
+
+    session_match_id = st.session_state.get("match_id")
+    if isinstance(session_match_id, pd.Series):
+        session_match_id = int(session_match_id.iloc[0])
+    elif session_match_id is not None:
+        session_match_id = int(session_match_id)
+
+    preset = None
+    if session_match_id is not None:
+        preselected = matches_df[matches_df["match_id"] == session_match_id]
+        if not preselected.empty:
+            preset = preselected.iloc[0]
+
     competitions = sorted(matches_df["competition_name"].unique())
-
     competition = st.selectbox(
-        "Competition", competitions, index=None, placeholder="Select a Competition")
-
-    team_df = matches_df
+        "Competition",
+        competitions,
+        index=competitions.index(preset["competition_name"]) if preset is not None else None,
+        placeholder="Select a Competition",
+    )
 
     if competition:
-        team_df = matches_df[matches_df["competition_name"] == competition]
+        season_df = matches_df[matches_df["competition_name"] == competition]
+        seasons = sorted(season_df["season_name"].unique())
+        season = st.selectbox(
+            "Season",
+            seasons,
+            index=seasons.index(preset["season_name"])
+            if preset is not None and preset["competition_name"] == competition
+            else None,
+            placeholder="Select a Season",
+        )
 
-    team_name = st.selectbox(
-        "Team", team_df["home_team_name"].unique(), index=None, placeholder="Select a Team"
-    )
-    away_team_df = matches_df
+        if season:
+            match_df = season_df[season_df["season_name"] == season]
+            match_labels = (
+                match_df["home_team_name"]
+                + " vs "
+                + match_df["away_team_name"]
+                + " ("
+                + match_df["match_date"]
+                + ")"
+            )
+            match_ids = match_df["match_id"].tolist()
+            match = st.selectbox(
+                "Match",
+                match_labels,
+                index=match_ids.index(session_match_id)
+                if preset is not None
+                and preset["competition_name"] == competition
+                and preset["season_name"] == season
+                and session_match_id in match_ids
+                else None,
+                placeholder="Select a Match",
+            )
 
-    if team_name:
-        away_team_df = team_df[team_df["home_team_name"] == team_name]
-
-    away_team_name = st.selectbox(
-        "Opposition", away_team_df["away_team_name"].unique(), index=None, placeholder="Select an Away Team"
-    )
-
-    seasons_df = matches_df
-
-    if away_team_name:
-        seasons_df = away_team_df[away_team_df["away_team_name"] == away_team_name]
-    season = st.selectbox(
-        "Season", seasons_df["season_name"].unique(), index=None, placeholder="Select a Season"
-    )
-
-    matches_df = seasons_df[seasons_df["season_name"] == season]
-    if st.button("Open Match") and not matches_df.empty:
-        st.session_state["match_id"] = int(matches_df.iloc[0]["match_id"])
-        st.switch_page("pages/1_Matches.py")
+            if match:
+                st.session_state["match_id"] = match_ids[match_labels.tolist().index(match)]
+                if st.button("Open Match"):
+                    st.switch_page("pages/1_Matches.py")
 
 with team:
     st.subheader("Teams")
