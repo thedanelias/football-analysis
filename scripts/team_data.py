@@ -11,7 +11,7 @@ from functools import lru_cache
 
 import pandas as pd
 
-from data_loader import (
+from scripts.data_loader import (
     DATA_PATH,
     ROOT,
     flatten_match,
@@ -267,12 +267,12 @@ def _get_match_info(match_id):
 def get_team_match_stats(match_id, team_id):
     """All statistics for one team in one match (totals + match context)."""
     team_id = int(team_id)
-    stats = get_match_stats(match_id)
+    stats = _get_match_stats(match_id)
     if team_id not in stats:
         raise ValueError(f"Team {team_id} has no events in match {match_id}")
     metrics = dict(stats[team_id])
 
-    info = get_match_info(match_id) or {}
+    info = _get_match_info(match_id) or {}
     home_id = info.get("home_team_id")
     away_id = info.get("away_team_id")
     is_home = team_id == home_id
