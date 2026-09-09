@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+from scripts import team_data, seasons_competitions_data, parse_team_stats_season, player_data
+from scripts.parse_team_stats_season import get_team_record
 
 st.set_page_config(
     page_title = "Team Analysis",
@@ -17,96 +18,106 @@ teams_df = pd.read_csv("resources/statsbomb_teams.csv")
 st.sidebar.header("Filters")
 
 teams = sorted(teams_df["team_name"].unique())
+index = teams.index(team_name) if team_name else None
 
 team = st.sidebar.selectbox(
-    "Team", teams, index=team_name, placeholder="Select Team"
+    "Team", teams, index=index, placeholder="Select Team"
 )
+
+if not team:
+    st.info("Select a team to view its season.")
+    st.stop()
+
+team_id = team_data.get_team_id_by_name(team)
 
 team_competitions_df = team_seasons_df[team_seasons_df["team_name"] == team]
 competition = st.sidebar.selectbox("Competition", sorted(team_competitions_df["competition_name"].unique()),
                                    index=None, placeholder="Select Competition")
+competition_id = seasons_competitions_data.get_competition_id_by_name(competition)
 
 team_seasons_df = team_competitions_df[team_competitions_df["competition_name"] == competition]
 season = st.sidebar.selectbox("Season", sorted(team_seasons_df["season_name"].unique()), index=None,
                               placeholder="Select Season")
+season_id = seasons_competitions_data.get_season_id_by_name(season, competition_id)
+
+
 
 st.header(team)
-
-col1, col2, col3, col4 = st.columns(4)
-
-col1.metric("League Position", "2nd")
-col2.metric("Points", 68)
-col3.metric("Goals For", 65)
-col4.metric("Goals Against", 42)
-
-st.divider()
+season_stats = None
+if season_id and competition_id and team_id is not None:
+    season_stats = team_data.get_team_season_stats(team_id, competition_id, season_id)
 
 
+if season_stats:
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
 
-left, right = st.columns(2)
+    record = get_team_record(season_stats)
+    col1.metric("Points", parse_team_stats_season.get_team_points(season_stats))
+    goals = parse_team_stats_season.get_team_goals(season_stats)
+    col2.metric("Goals For", goals[0])
+    col3.metric("Goals Against", goals[1])
+    col4.metric("Wins", record[0])
+    col5.metric("Draws", record[1])
+    col6.metric("Losses", record[2])
 
-with left:
-    st.subheader("Attack")
-    attack = pd.DataFrame({
-        "Metric": [
-            "Goals For",
-            "xG",
-            "Shots",
-            "Big Chances",
-            "Conversion %"
-        ],
-        "Value": [65, 61.4, 485, 91, "14.2%"]
-    })
+    st.divider()
 
-    st.dataframe(attack, width="stretch")
+    left, right = st.columns(2)
 
-with right:
-    st.subheader("Defense")
-    defense = pd.DataFrame({
-        "Metric": [
-            "Goals Against",
-            "xGA",
-            "Clean Sheets",
-            "Tackles",
-            "Interceptions"
-        ],
-        "Value": [42, 30.4, 11, 296, 498]
-    })
+    with left:
+        st.subheader("Attack")
+        attack = parse_team_stats_season.get_attack_frame(season_stats)
+        st.dataframe(attack, width="stretch")
 
-    st.dataframe(defense, width="stretch")
+    with right:
+        st.subheader("Defense")
+        defense = parse_team_stats_season.get_defense_frame(season_stats)
+        st.dataframe(defense, width="stretch")
 
-st.divider()
-st.subheader("Recent Results")
+    st.divider()
+    st.subheader("Recent Results")
 
-fixtures = pd.DataFrame({
-    "Opponent": [
-        "Liverpool",
-        "Chelsea",
-        "Spurs",
-        "Brighton",
-        "Aston Villa"
-    ],
-    "Result": ["W", "D", "W", "L", "W"],
-    "Score": ["2-1", "1-1", "3-0", "0-1", "4-2"]
-})
+    fixtures = pd.DataFrame(parse_team_stats_season.get_recent_results(season_stats))
 
-st.dataframe(fixtures, width="stretch")
+    st.dataframe(fixtures, width="stretch")
 
-st.divider()
+    st.divider()
 
-st.subheader("Squad Statstics")
+    st.subheader("Squad Statstics")
 
-squad = pd.DataFrame({
-    "Player": [
-        "<NAME>",
-        "<NAME>",
-        "<NAME>",
-        "<NAME>",
-        "<NAME>"
-    ],
-    "Goals": [18, 12, 7, 5, 3],
-    "Assists": [6, 9, 11, 2, 1],
-    "Rating": [7.8, 7.5, 7.3, 7.1, 6.9]
-})
 
-st.dataframe(squad, width="stretch")
+    def squad_stats(team_id, competition_id, season_id):
+        player_seasons = pd.read_csv("resources/statsbomb_player_seasons.csv")
+        players_meta = pd.read_csv("resources/statsbomb_players.csv")
+        squad = player_seasons[
+            (player_seasons["team_id"] == int(team_id))
+            & (player_seasons["competition_id"] == int(competition_id))
+            & (player_seasons["season_id"] == int(season_id))
+            & (player_seasons["num_matches"] > 0)
+        ]
+        name_map = dict(
+            zip(
+                players_meta["player_id"],
+                players_meta["player_nickname"].fillna(players_meta["player_name"]),
+            )
+        )
+        rows = []
+        for pid in squad["player_id"].dropna().unique():
+            pid = int(pid)
+            stats = player_data.player_season_stats(pid, season_id, competition_id)
+            rows.append(
+                {
+                    "Player": name_map.get(pid, str(pid)),
+                    "Appearances": stats.get("appearances", 0),
+                    "Goals": stats.get("goals", 0),
+                    "Assists": stats.get("assists", 0),
+                    "xG": round(stats.get("total_xg", 0.0), 2),
+                }
+            )
+        return sorted(
+            rows, key=lambda r: (r["Goals"], r["Assists"]), reverse=True
+        )[:20]
+
+
+    squad = pd.DataFrame(squad_stats(team_id, competition_id, season_id))
+    st.dataframe(squad, width="stretch")
