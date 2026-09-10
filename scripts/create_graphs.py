@@ -107,5 +107,3 @@ def plot_shot_map_match_team(match_id, team_name):
     shots = shots[shots["team_name"] == team_name]
     shots = get_shot_location(shots)
     return draw_shots(shots, pitch)
-
-print(match_data.get_shots(3895158).columns)
