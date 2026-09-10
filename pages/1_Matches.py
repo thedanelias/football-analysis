@@ -1,7 +1,8 @@
 import pandas as pd
 import streamlit as st
-from scripts import match_data, player_data, team_data
-from scripts.data_loader import load_lineups
+import matplotlib.pyplot as plt
+from scripts import match_data, player_data, team_data, create_graphs, data_loader
+from scripts.create_graphs import plot_pass_map_match
 
 st.set_page_config(
     page_title="Match Analysis",
@@ -110,7 +111,7 @@ left, right = st.columns([1, 1])
 
 def player_match_rows(match_id_f):
     rows = []
-    for _, lineup in load_lineups(match_id_f).iterrows():
+    for _, lineup in data_loader.load_lineups(match_id_f).iterrows():
         team_label_f = lineup["team_name"]
         for entry in lineup["lineup"]:
             pid = int(entry["player_id"])
@@ -146,15 +147,15 @@ with right:
 
 st.divider()
 
-bottom_left, bottom_right = st.columns(2)
-
-with bottom_left:
+shot_timeline = st.columns(1)
+with shot_timeline[0]:
     st.subheader("Shot Timeline")
 
     shots = match_data.get_shots(match_id)
     if not shots.empty:
         timeline = shots[["minute", "shot_xg", "team_name"]].copy()
         timeline = timeline[timeline["shot_xg"] > 0]
+        timeline["shot_xg"] = timeline["shot_xg"].round(2)
         if not timeline.empty:
             st.scatter_chart(timeline, x="minute", y="shot_xg", color="team_name")
         else:
@@ -162,6 +163,34 @@ with bottom_left:
     else:
         st.info("No shot data for this match.")
 
+st.divider()
+bottom_left, bottom_right = st.columns(2)
+
+with bottom_left:
+    team = teams[0]
+    st.subheader(team + " Passing Map")
+    fig_home_pass, ax1 = create_graphs.plot_pass_map_match_team(match_id, team)
+    st.pyplot(fig_home_pass)
+
+
 with bottom_right:
-    st.subheader("Passing Network")
-    st.container(height=300)
+    team = teams[1]
+    st.subheader(team + " Passing Map")
+    fig_away_pass, ax2 = create_graphs.plot_pass_map_match_team(match_id, team)
+    st.pyplot(fig_away_pass)
+
+st.divider()
+
+home_shots_map, away_shots_map = st.columns(2)
+
+with home_shots_map:
+    team = teams[0]
+    st.subheader(team + " Shots")
+    fig_home_shot, ax4 = create_graphs.plot_shot_map_match_team(match_id, team)
+    st.pyplot(fig_home_shot)
+
+with away_shots_map:
+    team = teams[1]
+    st.subheader(team + " Shots")
+    fig_away_shot, ax5 = create_graphs.plot_shot_map_match_team(match_id, team)
+    st.pyplot(fig_away_shot)
