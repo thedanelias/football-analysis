@@ -70,15 +70,19 @@ if season_stats:
 
 
     recent = recent_player_matches(player_id, season_id, competition_id)
+    st.divider()
 
     if recent:
-        xg_by_opponent = pd.DataFrame(
+        xg_by_match = pd.DataFrame(
             {
-                "Opponent": [m["opponent_name"] for m in recent],
-                "xG": [m.get("total_xg", 0.0) for m in recent],
+                "Match": range(len(recent)), # needed so matches against same opponent aren't counted in the same bar
+                "Opponent": [m['opponent_name'] for m in recent],
+                "xG": [m.get("total_xg", 0.0) for m in recent]
             }
         )
-        st.bar_chart(xg_by_opponent.set_index("Opponent"))
+        st.bar_chart(xg_by_match.set_index("Match")["xG"])
+        # adds label to bar chart
+        st.dataframe(xg_by_match[["Match", "Opponent", "xG"]], hide_index=True)
     else:
         st.info("No recent matches found for this player.")
 
