@@ -121,3 +121,5 @@ def get_all_players_and_teams():
               ["team_id", "team_name", "competition_id", "competition_name",
                "season_id", "season_name", "num_matches"],
               get_team_seasons(matches_df))
+
+get_all_players_and_teams()
