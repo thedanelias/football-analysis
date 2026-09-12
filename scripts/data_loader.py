@@ -2,19 +2,27 @@ import pandas as pd
 import json
 import csv
 from pathlib import Path
+import streamlit as st
+import functools
+
+from anyio.functools import lru_cache
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "statsbomb_data"
 
+@lru_cache(maxsize=128)
 def load_events(match_id):
     return pd.read_json(DATA_PATH / "events" / f"{match_id}.json")
 
+@lru_cache(maxsize=128)
 def load_lineups(match_id):
     return pd.read_json(DATA_PATH / "lineups" / f"{match_id}.json")
 
+@lru_cache(maxsize=128)
 def load_matches(competition_id, season_id):
     return pd.read_json(DATA_PATH / "matches" / str(competition_id) / f"{season_id}.json")
 
+@lru_cache(maxsize=None)
 def load_competitions():
     with open(DATA_PATH / "competitions.json") as f:
         return pd.DataFrame(json.load(f))
@@ -48,6 +56,7 @@ def flatten_match(raw):
         "referee": referee.get("name"),
     }
 
+@lru_cache(maxsize=128)
 def load_all_matches():
     records = []
     for path in sorted((DATA_PATH / "matches").glob("*/*.json")):

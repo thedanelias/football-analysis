@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-from scripts import team_data, seasons_competitions_data, parse_team_stats_season, player_data
-from scripts.parse_team_stats_season import get_team_record
+from scripts import team_data, seasons_competitions_data, parse_team_stats_season, player_data, pages_common
 
 st.set_page_config(
     page_title = "Team Analysis",
@@ -10,10 +9,13 @@ st.set_page_config(
 
 st.title("Team Analysis")
 
+# for caching so it's quicker to load
+
+
 # get team id if selected from homepage
 team_name = st.session_state.get("team_name")
-team_seasons_df = pd.read_csv("resources/statsbomb_team_seasons.csv")
-teams_df = pd.read_csv("resources/statsbomb_teams.csv")
+team_seasons_df = pages_common.load_csv("resources/statsbomb_team_seasons.csv")
+teams_df = pages_common.load_csv("resources/statsbomb_teams.csv")
 
 st.sidebar.header("Filters")
 
@@ -51,7 +53,7 @@ if season_id and competition_id and team_id is not None:
 if season_stats:
     col1, col2, col3, col4, col5, col6 = st.columns(6)
 
-    record = get_team_record(season_stats)
+    record = parse_team_stats_season.get_team_record(season_stats)
     col1.metric("Points", parse_team_stats_season.get_team_points(season_stats))
     goals = parse_team_stats_season.get_team_goals(season_stats)
     col2.metric("Goals For", goals[0])

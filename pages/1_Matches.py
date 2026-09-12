@@ -1,8 +1,6 @@
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
-from scripts import match_data, player_data, team_data, create_graphs, data_loader
-from scripts.create_graphs import plot_pass_map_match
+from scripts import match_data, player_data, team_data, create_graphs, data_loader, pages_common
 
 st.set_page_config(
     page_title="Match Analysis",
@@ -12,7 +10,7 @@ st.set_page_config(
 st.title("Match Analysis")
 st.sidebar.header("Filters")
 
-matches_df = pd.read_csv("resources/statsbomb_matches.csv")
+matches_df = pages_common.load_csv("resources/statsbomb_matches.csv")
 matches_df["match_id"] = matches_df["match_id"].astype(int)
 
 session_match_id = st.session_state.get("match_id")

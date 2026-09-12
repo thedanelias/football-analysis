@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-from scripts import player_data, seasons_competitions_data
+from scripts import player_data, seasons_competitions_data, pages_common
 
 st.set_page_config(
     page_title="Player Analysis",
@@ -10,7 +10,7 @@ st.set_page_config(
 st.title("Player Analysis")
 st.sidebar.header("Filters")
 
-players_df = pd.read_csv("resources/statsbomb_players.csv")
+players_df = pages_common.load_csv("resources/statsbomb_players.csv")
 player_name = st.session_state.get("player_name")
 
 players = sorted(players_df["player_nickname"].fillna(players_df["player_name"]).tolist())
@@ -22,7 +22,7 @@ player = st.sidebar.selectbox(
 
 player_id = player_data._player_id_from_csv(player) if player else None
 
-competitions_df = pd.read_csv("resources/statsbomb_player_seasons.csv")
+competitions_df = pages_common.load_csv("resources/statsbomb_player_seasons.csv")
 competitions_df = competitions_df[competitions_df["player_id"] == player_id]
 competition = st.sidebar.selectbox("Competition", sorted(competitions_df["competition_name"].unique()),
                                    index=None, placeholder="Select Competition")
@@ -32,6 +32,7 @@ seasons_df = competitions_df[competitions_df["competition_id"] == competition_id
 season = st.sidebar.selectbox("Season", sorted(seasons_df["season_name"].unique()),
                                    index=None, placeholder="Select Season")
 season_id = seasons_competitions_data.get_season_id_by_name(season) if season else None
+season_stats = None
 
 if player_id is None or season_id is None or competition_id is None:
     st.info("Select a player to view their season.")
