@@ -95,6 +95,31 @@ def _subbed_on_ids(events):
     return ids
 
 
+def _minutes_played(events, player_id):
+    """Approximate minutes played from event timeline.
+
+    Starters kick off at minute 0; substitutes enter at their replacement
+    event's minute. A player either plays to full time (last event's minute,
+    including stoppage/extra time) or until their off-substitution minute.
+    """
+    duration = max((ev.get("minute") or 0) for ev in events)
+    off_minute = on_minute = None
+    for ev in events:
+        if ev["type"]["name"] != "Substitution":
+            continue
+        minute = ev.get("minute")
+        if (ev.get("player") or {}).get("id") == player_id:
+            off_minute = minute
+        if ((ev.get("substitution") or {}).get("replacement") or {}).get("id") == player_id:
+            on_minute = minute
+
+    if player_id in _starter_ids(events):
+        return off_minute if off_minute is not None else duration
+    if on_minute is not None:
+        return (off_minute if off_minute is not None else duration) - on_minute
+    return 0
+
+
 def _team_names(events):
     names = []
     for ev in events:
@@ -483,6 +508,7 @@ def player_match_stats(match_id, player):
             "opponent_name": next((n for n in teams if n != bench["team_name"]), None),
             "appearances": 0,
             "starts": 0,
+            "minutes_played": 0,
         }
         return _finalize(defaultdict(float), meta)
 
@@ -496,6 +522,7 @@ def player_match_stats(match_id, player):
         "player_name": pname,
         **context,
         **participation,
+        "minutes_played": _minutes_played(events, pid),
     }
     return _finalize(raw, meta)
 
@@ -585,7 +612,7 @@ def player_season_stats(player_id, season_id, competition_id=None):
     games count only towards `unused_sub_appearances`.
     """
     raw = defaultdict(float)
-    appearances = starts = sub_uses = unused = matches_scanned = 0
+    appearances = starts = sub_uses = unused = matches_scanned = minutes = 0
 
     for match_id in get_player_match_ids(player_id, season_id, competition_id):
         try:
@@ -601,10 +628,12 @@ def player_season_stats(player_id, season_id, competition_id=None):
         if player_id in starters:
             appearances += 1
             starts += 1
+            minutes += _minutes_played(events, player_id)
             _accumulate(events, player_id, raw)
         elif player_id in subs_on or has_activity:
             appearances += 1
             sub_uses += 1
+            minutes += _minutes_played(events, player_id)
             _accumulate(events, player_id, raw)
         else:
             unused += 1
@@ -623,7 +652,10 @@ def player_season_stats(player_id, season_id, competition_id=None):
         "starts": starts,
         "substitute_appearances": sub_uses,
         "unused_sub_appearances": unused,
+        "total_minutes": minutes,
     }
+    if appearances:
+        meta["avg_minutes_per_game"] = round(minutes / appearances, 1)
     return _finalize(raw, meta)
 
 
