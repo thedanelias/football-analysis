@@ -7,6 +7,13 @@ st.set_page_config(
     layout="wide",
 )
 
+
+def per90(value, minutes, decimals=2):
+    if not minutes:
+        return 0.0
+    return round(value * 90.0 / minutes, decimals)
+
+
 st.title("Player Analysis")
 st.sidebar.header("Filters")
 
@@ -32,6 +39,7 @@ seasons_df = competitions_df[competitions_df["competition_id"] == competition_id
 season = st.sidebar.selectbox("Season", sorted(seasons_df["season_name"].unique()),
                                    index=None, placeholder="Select Season")
 season_id = seasons_competitions_data.get_season_id_by_name(season) if season else None
+season_stats = None
 
 if player_id is None or season_id is None or competition_id is None:
     st.info("Select a player to view their season.")
@@ -42,12 +50,21 @@ if player_id is not None and season_id is not None and competition_id is not Non
 
 
 if season_stats:
+    minutes = season_stats.get("total_minutes", 0)
+
+    st.caption(
+        f"{season_stats.get('appearances', 0)} appearances, "
+        f"{season_stats.get('starts', 0)} starts · "
+        f"{minutes} minutes · "
+        f"{season_stats.get('avg_minutes_per_game', 0)} min/game"
+    )
+
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric("Goals", season_stats.get("goals", 0))
-    col2.metric("Assists", season_stats.get("assists", 0))
-    col3.metric("xG", season_stats.get("total_xg", 0))
-    col4.metric("Appearances", season_stats.get("appearances", 0))
+    col1.metric("Goals / 90", per90(season_stats.get("goals", 0), minutes, 1))
+    col2.metric("Assists / 90", per90(season_stats.get("assists", 0), minutes, 1))
+    col3.metric("xG / 90", per90(season_stats.get("total_xg", 0), minutes))
+    col4.metric("Key Passes / 90", per90(season_stats.get("key_passes", 0), minutes))
 
     st.divider()
 
@@ -70,6 +87,7 @@ if season_stats:
 
 
     recent = recent_player_matches(player_id, season_id, competition_id)
+
     st.divider()
 
     if recent:
@@ -91,17 +109,17 @@ if season_stats:
     left, right = st.columns(2)
 
     with left:
-        st.subheader("Attack")
+        st.subheader("Attack / 90")
 
         attack = pd.DataFrame(
             {
                 "Metric": ["Shots", "Goals", "xG", "Key Passes", "Dribbles Completed"],
                 "Value": [
-                    season_stats.get("shots", 0),
-                    season_stats.get("goals", 0),
-                    season_stats.get("total_xg", 0),
-                    season_stats.get("key_passes", 0),
-                    season_stats.get("dribbles_completed", 0),
+                    per90(season_stats.get("shots", 0), minutes),
+                    per90(season_stats.get("goals", 0), minutes),
+                    per90(season_stats.get("total_xg", 0), minutes),
+                    per90(season_stats.get("key_passes", 0), minutes),
+                    per90(season_stats.get("dribbles_completed", 0), minutes),
                 ],
             }
         )
@@ -109,7 +127,7 @@ if season_stats:
         st.dataframe(attack, width="stretch")
 
     with right:
-        st.subheader("Defense")
+        st.subheader("Defense / 90")
 
         defense = pd.DataFrame(
             {
@@ -121,11 +139,11 @@ if season_stats:
                     "Pressures",
                 ],
                 "Value": [
-                    season_stats.get("tackles_won", 0),
-                    season_stats.get("interceptions", 0),
-                    season_stats.get("ball_recoveries", 0),
-                    season_stats.get("duels_won", 0),
-                    season_stats.get("pressures_applied", 0),
+                    per90(season_stats.get("tackles_won", 0), minutes),
+                    per90(season_stats.get("interceptions", 0), minutes),
+                    per90(season_stats.get("ball_recoveries", 0), minutes),
+                    per90(season_stats.get("duels_won", 0), minutes),
+                    per90(season_stats.get("pressures_applied", 0), minutes),
                 ],
             }
         )
@@ -140,6 +158,7 @@ if season_stats:
         fixtures = pd.DataFrame(
             {
                 "Opponent": [m["opponent_name"] for m in recent],
+                "Minutes": [m.get("minutes_played", 0) for m in recent],
                 "Goals": [m.get("goals", 0) for m in recent],
                 "Assists": [m.get("assists", 0) for m in recent],
                 "xG": [round(m.get("total_xg", 0.0), 2) for m in recent],
