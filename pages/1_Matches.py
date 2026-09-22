@@ -149,19 +149,33 @@ st.divider()
 
 shot_timeline = st.columns(1)
 with shot_timeline[0]:
-    st.subheader("Shot Timeline")
+    st.subheader("Cumulative xG Timeline")
 
     shots = match_data.get_shots(match_id)
-    if not shots.empty:
-        timeline = shots[["minute", "shot_xg", "team_name"]].copy()
-        timeline = timeline[timeline["shot_xg"] > 0]
-        timeline["shot_xg"] = timeline["shot_xg"].round(2)
-        if not timeline.empty:
-            st.scatter_chart(timeline, x="minute", y="shot_xg", color="team_name")
-        else:
-            st.info("No shot xG data for this match.")
+    timeline = shots[["minute", "shot_xg", "team_name"]].copy()
+    timeline = timeline[timeline["shot_xg"] > 0]
+    if not timeline.empty:
+        timeline = timeline.sort_values("minute")
+        timeline["cumulative_xg"] = timeline.groupby("team_name")["shot_xg"].cumsum()
+
+        fig_xg, ax_xg = plt.subplots(figsize=(10, 5))
+        for team_name, team_shots in timeline.groupby("team_name"):
+            ax_xg.step(
+                team_shots["minute"],
+                team_shots["cumulative_xg"],
+                where="post",
+                label=team_name,
+            )
+        ax_xg.set_xlabel("Minute")
+        ax_xg.set_ylabel("Cumulative xG")
+        ax_xg.set_xlim(left=0)
+        ax_xg.set_ylim(bottom=0)
+        ax_xg.legend()
+        ax_xg.grid(True, alpha=0.3)
+        st.pyplot(fig_xg)
+        plt.close(fig_xg)
     else:
-        st.info("No shot data for this match.")
+        st.info("No shot xG data for this match.")
 
 st.divider()
 bottom_left, bottom_right = st.columns(2)
